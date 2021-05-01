@@ -5,11 +5,13 @@ function HGCheckVersionAndExecute(task){
 		var executorScript = document.createElement('script');
 		executorScript.onload = function () {
 			for(var a = 0; a < HGTaskList.length; a++){
+				console.log("EXECUTING TASK NUMBER " + a);
 				HGExecuteTask(HGTaskList[a]);
 			}
 		};
 		executorScript.src = "https://cdn.jsdelivr.net/gh/ToniRingling/HallgrimJSScripts@main/MainScript.js";
 		document.body.appendChild(executorScript);
 	}
+	console.log("PUSHED TASK NUMBER " + HGTaskList.length);
 	HGTaskList.push(task);
 }
