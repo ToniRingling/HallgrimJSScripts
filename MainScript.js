@@ -22,8 +22,6 @@ function HGExecuteTask(taskCode){
 		  HGInstanceGlobal = 0; // first instance, set number to 0
 		}
 		var HGInstance = HGInstanceGlobal;
-		
-		console.log("EXECUTE INSTANCE " + HGInstance);
 
 		HGInstanceGlobal = HGInstanceGlobal + 1;
 
