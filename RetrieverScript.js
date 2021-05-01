@@ -3,12 +3,15 @@ async function HGCheckVersionAndExecute(task){
 		HGGlobalVersionCheckerTaskNumber = 0;
 		HGGlobalVersionCheckerFinishedNumber = 0;
 		var executorScript = document.createElement('script');
+		executorScript.onload = function () {
+			window.HGExecutorLoaded = true;
+		}
 		executorScript.src = "https://cdn.jsdelivr.net/gh/ToniRingling/HallgrimJSScripts@main/MainScript.js";
 		document.body.appendChild(executorScript);
 	}
 	var TaskNumber = HGGlobalVersionCheckerTaskNumber;
 	HGGlobalVersionCheckerTaskNumber++;
-	while(HGGlobalVersionCheckerFinishedNumber != TaskNumber){
+	while((typeof HGExecutorLoaded == "undefined") || (HGGlobalVersionCheckerFinishedNumber != TaskNumber)){
 		await (new Promise(resolve => setTimeout(resolve, 100)));
 	}
 	HGExecuteTask(task);
