@@ -452,12 +452,12 @@ function HGExecuteTask(taskCode){
 			if(typeof(HGPrepPass) == "undefined"){HGPrepPass = 0;} //temporary solution for solving the second round of preparations when correcting}
 			if(HGMode == "ANSWERING"){
 				HGSRand((new Date).getTime());
-				HGAutoSave({STANDARDTIME});
+				HGAutoSave(30000);
 				HGTimeEndReplacer();
 				HGLoaded = true; // no loading needed
 			}
 			else if(HGMode == "CONTINUING"){
-				HGAutoSave({STANDARDTIME});
+				HGAutoSave(30000);
 				HGTimeEndReplacer();
 			}
 			else if(HGMode == "CORRECTING"){
