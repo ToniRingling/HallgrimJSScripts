@@ -1,17 +1,17 @@
-function HGCheckVersionAndExecute(task){
-	// Note that the executor script should always be loaded after all tasks with this construction. As such all tasks should be pushed onto the list before it is loaded.
-	if(typeof HGTaskList == "undefined"){ // first version checker, load the executor script
-		window.HGTaskList = [];
+async function HGCheckVersionAndExecute(task){
+	if(typeof HGGlobalVersionCheckerTaskNumber = "undefined"){ // first version checker, initializes global variables and loads executor script
+		HGGlobalVersionCheckerTaskNumber = 0;
+		HGGlobalVersionCheckerFinishedNumber = 0;
 		var executorScript = document.createElement('script');
 		executorScript.onload = function () {
-			for(var a = 0; a < HGTaskList.length; a++){
-				console.log("EXECUTING TASK NUMBER " + a);
-				HGExecuteTask(HGTaskList[a]);
-			}
-		};
 		executorScript.src = "https://cdn.jsdelivr.net/gh/ToniRingling/HallgrimJSScripts@main/MainScript.js";
 		document.body.appendChild(executorScript);
 	}
-	console.log("PUSHED TASK NUMBER " + HGTaskList.length);
-	HGTaskList.push(task);
+	var TaskNumber = HGGlobalVersionCheckerTaskNumber;
+	HGGlobalVersionCheckerTaskNumber++;
+	while(HGGlobalVersionCheckerFinishedNumber != TaskNumber){
+		await (new Promise(resolve => setTimeout(resolve, 100)));
+	}
+	HGExecuteTask(task);
+	HGGlobalVersionCheckerFinishedNumber++;
 }
