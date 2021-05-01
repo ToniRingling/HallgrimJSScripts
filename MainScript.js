@@ -63,8 +63,15 @@ function HGExecuteTask(taskCode){
 		var gaps = taskTop.parentNode.children[taskTopIndex - 1].children; // the question gaps are right above the HGTopMarker element
 
 		var gapIDs = [];
-		for(var a = 0; a < gaps.length - 4; a++){
-			gapIDs.push("answer" + a);
+		if(gaps[1].nodeName == "IMG"){ // when correcting, only half the elements in "gaps" are real gaps, the others are icons
+			for(var a = 0; a < (gaps.length / 2) - 4; a++){
+				gapIDs.push("answer" + a);
+			}
+		}
+		else{
+			for(var a = 0; a < gaps.length - 4; a++){
+				gapIDs.push("answer" + a);
+			}
 		}
 		gapIDs.push("raw");
 		gapIDs.push("comments");
