@@ -1,5 +1,117 @@
 function HGExecuteTask(taskCode){
-	eval(`
+	eval(`;(function(){
+		
+		window.onerror = function(ms, src, line, col, er){
+		  console.log(er);
+		  if(er instanceof SyntaxError){
+			alert("A syntax error was detected. The task likely failed catastrophically. The error is:\\n" + er.message);
+		  }
+		}
+		
+		HGRegularInstance = 0; // the HGInstance numbers to be expected in the respective types of instances, for use in scripts to distinguish both
+		HGFeedbackInstance = 1;
+
+		// global marker for being in an exam review
+
+		if(typeof HGIsExamReviewGlobal == 'undefined'){
+		  HGIsExamReviewGlobal = true; // assumed to be true, if false found when scanning the output gaps
+		}
+
+		// global counter for instances, used whenever multiple tasks are on one page (feedback, exams)
+		if(typeof HGInstanceGlobal == 'undefined'){ // check for global outside instance counter
+		  HGInstanceGlobal = 0; // first instance, set number to 0
+		}
+		var HGInstance = HGInstanceGlobal;
+
+		HGInstanceGlobal = HGInstanceGlobal + 1;
+
+		function HGGapStandardSetter(element){ // for answer-gaps
+		  var elementCopy = element;
+		  var setter = function(value){
+			elementCopy.value = HGToB64(value);
+		  }
+		  return setter;
+		}
+
+
+		function HGGapStandardGetter(element){ // for answer-gaps
+		  var elementCopy = element;
+		  var getter = function(){
+			return HGFromB64(elementCopy.value);
+		  }
+		  return getter;
+		}
+
+		function HGSBoxStandardGetter(element){ // for solution-boxes
+		  var elementCopy = element;
+		  var getter = function(){
+			try{
+			  var out = HGFromB64(elementCopy.innerText);
+			  return out;
+			}
+			catch(e){ // ILIAS inserts some whitespace when there is no answer, which causes HGFromB64 to fail
+			  return "";
+			}
+		  }
+		  return getter;
+		}
+
+
+		var taskTop = document.querySelectorAll("[HGTopMarker = 'Mark']")[0];
+		taskTop.setAttribute('HGTopMarker', 'Used');
+		var taskTopIndex = [].slice.call(taskTop.parentNode.children).indexOf(taskTop);
+		var gaps = taskTop.parentNode.children[taskTopIndex - 1].children; // the question gaps are right above the HGTopMarker element
+
+		var gapIDs = [];
+		for(var a = 0; a < gaps.length - 4; a++){
+			gapIDs.push("answer" + a);
+		}
+		gapIDs.push("raw");
+		gapIDs.push("comments");
+		gapIDs.push("meta");
+		gapIDs.push("misc");
+
+		if(document.getElementsByName("gap_0")[0]){ // check if currently answering
+		  HGMode = "ANSWERING"; // global variable for current question environment
+		  HGIsExamReviewGlobal = false;
+		  for (gapNum = 0; gapNum < gaps.length; gapNum++){
+			var element = gaps[gapNum];
+			element.type = "hidden"; // if so, hide answer and other fields
+			element.setAttribute("HGOutput", gapIDs[gapNum]);
+			element.setAttribute("HGNumber", HGInstance);
+			element.HGGetter = HGGapStandardGetter(element);
+			element.HGSetter = HGGapStandardSetter(element);
+		  }
+		  if(document.getElementsByName("gap_" + (gaps.length - 4))[0].value != ""){ // if there is already some raw input
+			HGMode = "CONTINUING"; // global variable for current question environment
+		  }
+		}
+		else if(document.getElementsByClassName("ilc_qinput_TextInput solutionbox")[0]){ // check if currently correcting
+		  HGMode = "CORRECTING"; // global variable for current question environment
+		  var gapMultiplier = 1;
+		  if(gaps[1].nodeName == "IMG"){ // with checkmarks/crosses
+			gapMultiplier = 2;
+			console.log("Gap contents (Troubleshooting information):"); // farther down gap contents are printed to console
+			if(HGInstance == 0){
+			  HGIsExamReviewGlobal = false; // when viewing exams this has no checksmarks/crosses, else it does, as it will be the upper part when viewing results
+			}
+		  }
+		  for (gapNum = 0; gapNum < gaps.length; gapNum++){
+			gaps[gapNum].setAttribute("hidden", true); // hide all the answer fields (helped troubleshooting, but sometimes caused a bizarre rendering bug in firefox)
+		  }
+		  for (gapNum = 0; gapNum * gapMultiplier < gaps.length; gapNum++){
+			var element = gaps[gapNum * gapMultiplier];
+			element.setAttribute("HGOutput", gapIDs[gapNum]);
+			element.setAttribute("HGNumber", HGInstance);
+			element.HGGetter = HGSBoxStandardGetter(element);
+			element.HGSetter = function(arg){}; // no changing of solutions
+			if(gapMultiplier == 2){
+			  console.log(gapIDs[gapNum] + ":");
+			  console.log(element.HGGetter());
+			}
+		  }
+		}
+	
 		HGErrorMessages = [];
 
 		function HGCompEnc(inp){
@@ -360,5 +472,5 @@ function HGExecuteTask(taskCode){
 		` + taskCode + `
 		HGPrepLoad();
 		HGNavButtonReplacer();
-	`)
+	}).call(this)`)
 }
