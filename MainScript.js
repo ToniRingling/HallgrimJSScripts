@@ -22,6 +22,8 @@ function HGExecuteTask(taskCode){
 		  HGInstanceGlobal = 0; // first instance, set number to 0
 		}
 		var HGInstance = HGInstanceGlobal;
+		
+		console.log("EXECUTE INSTANCE " + HGInstance);
 
 		HGInstanceGlobal = HGInstanceGlobal + 1;
 
@@ -429,6 +431,21 @@ function HGExecuteTask(taskCode){
 		function HGPeepHole(){ // alias
 		  HGPeephole();
 		}
+		
+		var HGFeedbackMap = {};
+		var HGFeedbackOnlyList = {};
+		
+		function HGShowFeedback(){
+		  var inputs = document.querySelectorAll("[HGInput]") // get all inputs
+		  for (var InpNum = 0; InpNum < inputs.length; InpNum++){
+			if((inputs[InpNum].HGNumber == HGInstance) && (typeof HGFeedbackMap[inputs[InpNum].getAttribute("HGInput")] != "undefined")){ // if feedback exists, set content to feedback
+			  inputs[InpNum].HGSetter(HGFeedbackMap[inputs[InpNum].getAttribute("HGInput")] );
+			}
+		  }
+		  for (var FBONum = 0; FBONum < HGFeedbackOnlyList.length; FBONum++){ // go through feedback-only-parts and display them
+			HGFeedbackOnlyList[FBONum].removeAttribute("hidden");
+		  }
+		}
 
 		HGLoaded = false; 
 		HGLoadHandler = function(){}; // may be replaced by user code to be called upon loading
@@ -441,6 +458,9 @@ function HGExecuteTask(taskCode){
 					HGRegisterEvaluator(blockEval);
 				}
 				HGLoadHandler();
+				if(HGInstance == HGFeedbackInstance && !HGIsExamReviewGlobal && HGMode == "CORRECTING"){
+					HGShowFeedback();
+				}
 				if(HGInstance == HGFeedbackInstance && !HGIsExamReviewGlobal && HGOutput("answer").HGGetter() == BestSolutionSeenString){ // checking for feedback instance already ensures we are correcting
 					alert("Die Musterlösung für diese Aufgabe wurden angesehen!");
 				}
