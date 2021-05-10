@@ -446,7 +446,7 @@ function HGExecuteTask(taskCode){
 		}
 		
 		var HGFeedbackMap = {};
-		var HGFeedbackOnlyList = {};
+		var HGFeedbackOnlyList = [];
 		
 		function HGShowFeedback(){
 		  var inputs = document.querySelectorAll("[HGInput]") // get all inputs
