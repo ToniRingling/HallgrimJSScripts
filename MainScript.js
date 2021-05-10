@@ -318,47 +318,60 @@ function HGExecuteTask(taskCode){
 		  HGRealButtons[toClick].click();
 		}
 
-		function HGNavButtonReplacer(){ // hides all navigation buttons and replaces them with new buttons which save and evaluate answers before doing the same thing
-			if(!((HGMode == "ANSWERING") || (HGMode == "CONTINUING"))){
-				return; // in other cases buttons are not replaced
-			}
-			try{
-				HGRealButtons = [];
-				var links = Array.prototype.slice.call(document.links); // links, converted to array to prevent replacing the replacements etc. for infinite looping
-				links = links.concat(Array.from(document.querySelectorAll("[class*='btn-default']"))); // other relevant navigation buttons
-				links = Array.from(new Set(links)); // make sure entries are unique
-				var fakedNum = 0;
-				for (var linkNum = 0; linkNum < links.length; linkNum++){
-					var linkClass = links[linkNum].getAttribute("class");
-					var fakeInner = "";
-					if(linkClass == null){ // plain link
-						fakeInner='<a onclick="HGSaveAndClick(' + fakedNum + ');" href="#">' + links[linkNum].innerHTML + '</a>';
-						if(links[linkNum].parentElement.getAttribute("role") == "tab"){ // these only exist within the administration-context (riders for preview, editing page etc.)
-							fakeInner = "";
+		if(typeof HGNavButtonsReplaced == 'undefined'){
+			HGNavButtonsReplaced = false;
+		}
+
+		async function HGNavButtonReplacer(){ // hides all navigation buttons and replaces them with new buttons which save and evaluate answers before doing the same thing
+			if(!HGNavButtonsReplaced){ // I think there is a really small chance for a race condition here, but that should be really unlikely
+				HGNavButtonsReplaced = true;
+				if(!((HGMode == "ANSWERING") || (HGMode == "CONTINUING"))){
+					return; // in other cases buttons are not replaced
+				}
+				try{
+					HGRealButtons = [];
+					var links = Array.prototype.slice.call(document.links); // links, converted to array to prevent replacing the replacements etc. for infinite looping
+					links = links.concat(Array.from(document.querySelectorAll("[class*='btn-default']"))); // other relevant navigation buttons
+					links = Array.from(new Set(links)); // make sure entries are unique
+					var fakedNum = 0;
+					for (var linkNum = 0; linkNum < links.length; linkNum++){
+						var linkClass = links[linkNum].getAttribute("class");
+						var fakeInner = "";
+						if(linkClass == null){ // plain link
+							fakeInner='<a onclick="HGSaveAndClick(' + fakedNum + ');" href="#">' + links[linkNum].innerHTML + '</a>';
+							if(links[linkNum].parentElement.getAttribute("role") == "tab"){ // these only exist within the administration-context (riders for preview, editing page etc.)
+								fakeInner = "";
+							}
 						}
-					}
-					else if((linkClass.search("btn-default") != -1) && (links[linkNum].innerHTML != "Frage entfernen")){ // regular navigation button, we sort out question removal buttons because they are in edit mode, and so don't need saving of answers, and we don't wan't these to be blocked by a faulty evaluator under any circumstances, so the test the question is in does not have to be deleted to remove it
-						var shownText = "";
-						if(links[linkNum].getAttribute("value") != null){ // buttons which look the same may be built in different ways
-							shownText = links[linkNum].getAttribute("value");
+						else if((linkClass.search("btn-default") != -1) && (links[linkNum].innerHTML != "Frage entfernen")){ // regular navigation button, we sort out question removal buttons because they are in edit mode, and so don't need saving of answers, and we don't wan't these to be blocked by a faulty evaluator under any circumstances, so the test the question is in does not have to be deleted to remove it
+							var shownText = "";
+							if(links[linkNum].getAttribute("value") != null){ // buttons which look the same may be built in different ways
+								shownText = links[linkNum].getAttribute("value");
+							}
+							else{
+								shownText = links[linkNum].innerHTML;
+							}
+							fakeInner='<button  type="button" onclick="HGSaveAndClick(' + fakedNum + ');"  class="' + links[linkNum].getAttribute("class") + '">' + shownText + '</button>';
 						}
-						else{
-							shownText = links[linkNum].innerHTML;
+						if(fakeInner != ""){
+							links[linkNum].style.display = "none"; // hide old button
+							HGRealButtons[fakedNum] = links[linkNum]; // put old button into HGRealButtons list
+							var fakeButton = document.createElement("NewLinkButton" + fakedNum); // make new fake button
+							fakeButton.innerHTML = fakeInner;
+							links[linkNum].parentNode.appendChild(fakeButton); // put fake button into same position as old button
+							fakedNum += 1;
 						}
-						fakeInner='<button  type="button" onclick="HGSaveAndClick(' + fakedNum + ');"  class="' + links[linkNum].getAttribute("class") + '">' + shownText + '</button>';
-					}
-					if(fakeInner != ""){
-						links[linkNum].style.display = "none"; // hide old button
-						HGRealButtons[fakedNum] = links[linkNum]; // put old button into HGRealButtons list
-						var fakeButton = document.createElement("NewLinkButton" + fakedNum); // make new fake button
-						fakeButton.innerHTML = fakeInner;
-						links[linkNum].parentNode.appendChild(fakeButton); // put fake button into same position as old button
-						fakedNum += 1;
 					}
 				}
-			}
-			catch(e){
-				HGErrorMessages.push("Error in navigation button replacement:" + e.message);
+				catch(e){
+					HGErrorMessages.push("Error in navigation button replacement:" + e.message);
+				}
+				document.addEventListener('DOMContentLoaded', (event) => {
+						if(document.getElementById("bottomnextbutton") != "undefined"){
+							document.getElementById("bottomnextbutton").style.display = "none";;
+						}
+					}
+				)
 			}
 		}
 
