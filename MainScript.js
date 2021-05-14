@@ -490,7 +490,7 @@ function HGExecuteTask(taskCode){
 		  var inputs = document.querySelectorAll("[HGInput]") // get all inputs
 		  for (var InpNum = 0; InpNum < inputs.length; InpNum++){
 			if((inputs[InpNum].HGNumber == HGInstance) && (typeof HGFeedbackMap[inputs[InpNum].getAttribute("HGInput")] != "undefined")){ // if feedback exists, set content to feedback
-			  inputs[InpNum].HGSetter(HGFeedbackMap[inputs[InpNum].getAttribute("HGInput")] );
+			  inputs[InpNum].HGSetter(HGFeedbackMap[inputs[InpNum].getAttribute("HGInput") + "num" + HGInstance]);
 			}
 		  }
 		  for (var FBONum = 0; FBONum < HGFeedbackOnlyList.length; FBONum++){ // go through feedback-only-parts and display them
