@@ -1,6 +1,7 @@
 function HGExecuteTask(taskCode){
 	eval(`;(function(){
 		
+		// special error detection for syntax errors, as we can not do this inside of the eval
 		window.onerror = function(ms, src, line, col, er){
 		  console.log(er);
 		  if(er instanceof SyntaxError){
@@ -35,7 +36,6 @@ function HGExecuteTask(taskCode){
 		  return setter;
 		}
 
-
 		function HGGapStandardGetter(element){ // for answer-gaps
 		  var elementCopy = element;
 		  var getter = function(){
@@ -58,7 +58,7 @@ function HGExecuteTask(taskCode){
 		  return getter;
 		}
 
-
+        // find the top of the task and identify the answer gaps
 		var taskTop = document.querySelectorAll("[HGTopMarker = 'Mark']")[0];
 		taskTop.setAttribute('HGTopMarker', 'Used');
 		var taskTopIndex = [].slice.call(taskTop.parentNode.children).indexOf(taskTop);
@@ -123,16 +123,19 @@ function HGExecuteTask(taskCode){
 	
 		HGErrorMessages = [];
 
+		// HTML-encodes comparators
 		function HGCompEnc(inp){
 			inp = inp.replace(/</g,"&lt;");
 			inp = inp.replace(/>/g,"&gt;");
 			return inp;
 		}
 
+		// sanitizes given HTML
 		function HGCleaner(inp){
 			DOMPurify.sanitize(inp);
 		}
 
+		// gets the input with the given ID belonging to this instance (may be undefined)
 		function HGInput(inputID){
 		  var result = document.querySelectorAll("[HGInput = " + inputID + "][HGNumber = '" + HGInstance + "']")[0];
 		  if(typeof result == 'undefined'){ // for compatibility with old tasks
@@ -141,11 +144,13 @@ function HGExecuteTask(taskCode){
 		  return result;
 		}
 
+		// registers a DOM element as an input for this instance with the given ID
 		function HGRegisterInput(element, HGID){
 		  element.setAttribute("HGInput", HGID);
 		  element.setAttribute("HGNumber", HGInstance);
 		}
 
+		// gets the output with the given ID belonging to this instance (may be undefined)
 		function HGOutput(outputID){
 		  if(outputID == "answer"){
 			  outputID = "answer0";
@@ -153,23 +158,28 @@ function HGExecuteTask(taskCode){
 		  return document.querySelectorAll("[HGOutput = " + outputID + "][HGNumber = '" + HGInstance + "']")[0];
 		}
 
+		// gets the utility element with the given ID belonging to this instance (may be undefined)
 		function HGUtility(utilityID){ // this is for anything that isn't input or output
 		  return document.querySelectorAll("[HGUtility = " + utilityID + "][HGNumber = '" + HGInstance + "']")[0];
 		}
 
+		// registers a DOM element as a utility element for this instance with the given ID
 		function HGRegisterUtility(element, HGID){
 		  element.setAttribute("HGUtility", HGID);
 		  element.setAttribute("HGNumber", HGInstance);
 		}
 
+		// returns all input elements of the given ID in an array, as such they may be from other instances
 		function HGInputs(inputID){
 		  return document.querySelectorAll("[HGInput = " + inputID + "]");
 		}
 
+		// returns all utility elements elements of the given ID in an array, as such they may be from other instances
 		function HGUtilities(utilityID){ // this is for anything that isn't input or output
 		  return document.querySelectorAll("[HGUtility = " + utilityID + "]");
 		}
 
+		// saves the content of all inputs in the "raw" gap
 		function HGSaveInputs(){
 		  var aggregate = {};
 		  var inputs = document.querySelectorAll("[HGInput]") // get all inputs
@@ -182,8 +192,9 @@ function HGExecuteTask(taskCode){
 		  HGOutput("raw").HGSetter(JSON.stringify(aggregate)); // save results to output for raw inputs
 		}
 
+		// loads the content of all input elements form the "raw" gap
 		function HGLoadInputs(){
-		  if(HGOutput("raw").HGGetter() != "raw"){
+		  if(HGOutput("raw").HGGetter() != "raw"){ // "raw" is standard content for feedback instances
 			try{
 			  var aggregate = JSON.parse(HGOutput("raw").HGGetter());
 			  for (const [id, content] of Object.entries(aggregate)){
@@ -196,12 +207,14 @@ function HGExecuteTask(taskCode){
 		  }
 		}
 
+		// saves HGMetaData to the "meta" output gap
 		function HGSaveMeta(){
 		  HGOutput("meta").HGSetter(JSON.stringify(HGMetaData));
 		}
 
+		// loads HGMetaData from the "meta" output gap
 		function HGLoadMeta(){
-		  if(HGOutput("meta").HGGetter() != "meta"){
+		  if(HGOutput("meta").HGGetter() != "meta"){ // "meta" is standard content for feedback instances
 			try{
 			  HGMetaData = JSON.parse(HGOutput("meta").HGGetter());
 			  HGRandomSeed = HGMetaData["RandomSeed"]; // be sure to set loaded random seed
@@ -212,22 +225,26 @@ function HGExecuteTask(taskCode){
 		  }
 		}
 
+		// saves both inputs and metadata to their respective gaps
 		function HGSaveAll(){
 		  HGSaveInputs();
 		  HGSaveMeta();
 		}
 
+		// loads both inputs and metadata from their respective gaps
 		function HGLoadAll(){
 		  HGLoadInputs();
 		  HGLoadMeta();
 		}
 
+		// whether we evaluate before autosaving
 		HGAutoEvaluate = false;
 
 		function HGEnableAutoEvaluation(){
 		  HGAutoEvaluate = true;
 		}
 
+		// saves current output gap contents via ajax call, akin to ILIAS autosave
 		function HGSaveToServer(){
 		  if(HGAutoEvaluate){
 			HGEvaluate();
@@ -261,13 +278,15 @@ function HGExecuteTask(taskCode){
 		  }
 		}
 
+		// whether we automatically save
 		HGAutoSaveDisabled = false;
 
 		function HGDisableAutoSave(){
 		  HGAutoSaveDisabled = true;
 		}
 
-		async function HGAutoSave(period){ // automatically saves every 'period' seconds
+		// automatically saves every 'period' seconds
+		async function HGAutoSave(period){
 		  while(true){
 			await (new Promise(resolve => setTimeout(resolve, period)));
 			if(HGAutoSaveDisabled){
@@ -278,7 +297,8 @@ function HGExecuteTask(taskCode){
 		  }
 		}
 
-		function HGFinish(){ // saves values and calls evaluator, should be called when finishing tasks (navigate elsewhere, time runs out etc.)
+		// saves values and calls evaluator, should be called when finishing tasks (navigate elsewhere, time runs out etc.)
+		function HGFinish(){
 		  HGSaveAll();
 		  HGEvaluate();
 		}
@@ -287,6 +307,7 @@ function HGExecuteTask(taskCode){
 		  HGFinishersGlobal = []; // first instance, set to empty list
 		}
 
+		// Contains all the functions for finishing when the time runs out
 		HGFinishersGlobal.push(function(finisher){return function(){finisher();};}(HGFinish));
 
 		function HGFinishAll(){
@@ -295,13 +316,15 @@ function HGExecuteTask(taskCode){
 		  }
 		}
 
-		async function HGTimeEnder(){ // inserted before the script which closes the task after the time runs out, saves and evaluates before closing
+		// inserted before the script which closes the task after the time runs out, saves and evaluates before closing
+		async function HGTimeEnder(){
 		  HGFinishAll();
-		  await (new Promise(resolve => setTimeout(resolve, 200))); // else value sometimes not saved
+		  await (new Promise(resolve => setTimeout(resolve, 200))); // else value sometimes not saved (although I can't figure out why)
 		  il.TestPlayerQuestionEditControl.saveOnTimeReached();
 		}
 
-		function HGTimeEndReplacer(){ // replaces the ending function for when time runs out by HGTimeEnder
+		// replaces the ending function for when time runs out by HGTimeEnder
+		function HGTimeEndReplacer(){
 			try{
 				if(typeof setWorkingTime != 'undefined'){ // check if there is a time limit
 					setWorkingTimeRenewer = new Function(setWorkingTime.toString().replace(/il.TestPlayerQuestionEditControl.saveOnTimeReached\(\)/g,"HGTimeEnder()") + "return setWorkingTime;") // new function
@@ -313,7 +336,8 @@ function HGExecuteTask(taskCode){
 			}
 		}
 
-		async function HGSaveAndClick(toClick){ // to be put on a replacement button for an old navigation button, saves and evaluates answers before clicking old button
+		// to be put on a replacement button for an old navigation button, saves and evaluates answers before clicking old button
+		async function HGSaveAndClick(toClick){
 		  HGFinishAll();
 		  HGRealButtons[toClick].click();
 		}
@@ -322,7 +346,8 @@ function HGExecuteTask(taskCode){
 			HGNavButtonsReplaced = false;
 		}
 
-		async function HGNavButtonReplacer(){ // hides all navigation buttons and replaces them with new buttons which save and evaluate answers before doing the same thing
+		// hides all navigation buttons and replaces them with new buttons which save and evaluate answers before doing the same thing
+		async function HGNavButtonReplacer(){
 			if(!HGNavButtonsReplaced){ // I think there is a really small chance for a race condition here, but that should be really unlikely
 				HGNavButtonsReplaced = true;
 				if(!((HGMode == "ANSWERING") || (HGMode == "CONTINUING"))){
@@ -375,16 +400,19 @@ function HGExecuteTask(taskCode){
 			}
 		}
 
+		// called whenever we want to evaluate user inputs, i.e. fill the answer gaps
 		function HGEvaluate(){
 		  return HGEvaluator();
 		}
-
+		
+		// used to register the function used to fill the answer gaps
 		function HGRegisterEvaluator(evaluator){
 		  HGEvaluator = function(evaluatorCl){return function(){evaluator();}}(evaluator);
 		}
 
 		var BestSolutionSeenString = "HallgrimJS: Die Musterlösung wurde angesehen."
 
+		// an evaluator to be used when any feedback buttons were used by the student
 		function HGBlockingEvaluator(){
 		  var ansNum = 0;
 		  while(HGOutput('answer' + ansNum) != undefined){
@@ -393,10 +421,12 @@ function HGExecuteTask(taskCode){
 		  }
 		}
 
+		// simple alias for document.getElementById (mostly because I spelled it document.getElementbyID too often)
 		function HGElement(inp){
 			return document.getElementById(inp);
 		}
 
+		// selects all elements of the given HGID
 		function HGElements(inp){
 			return document.querySelectorAll("[HGID = '" + inp + "']");
 		}
@@ -413,41 +443,49 @@ function HGExecuteTask(taskCode){
 		  return document.querySelectorAll("[HGID = '" + inp + "']")[HGUsedElements[inp] - 1];
 		}
 
+		// converts to modified string to base64
 		function HGToB64(inp) {
 		 return btoa(unescape(encodeURIComponent(inp)));
 		}
 
+		// changes base64 string as made by HGToB64 back
 		function HGFromB64(inp) {
 		 return decodeURIComponent(escape(atob(inp)));
 		}
 
+        // integrated random integer generator for dynamically constructed tasks
 		function HGRand(){
 		  HGRandomSeed = (((2 ** 31) - 1) & (Math.imul(13466917, HGRandomSeed))); // 32-bit linear congruence generator, do not use for any cryptographic purposes
 		  return HGRandomSeed;
 		}
 
+		// reads the seed from the metadata and seeds the random generator, making sure it is kept the same for the task of any user over any number of viewings (including when somebody else views their results)
 		function HGSRand(seed){
 		  HGMetaData["RandomSeed"] = seed;
 		  HGRandomSeed = seed;
 		}
 
-		function HGGlobalize(toGlobalize, name){ // push variable out into global context under the given name
+		// push variable out into global context under the given name
+		function HGGlobalize(toGlobalize, name){
 		  // should you ever want to try and make a version which maintains the same name it cant be a normal javaScript function, as the passing changes the name
 		  var closer = function(glob){var inside = glob; return inside;}
 		  window[name] = closer(toGlobalize);
 		}
 
-		function HGPeephole(){ // get a way to eval something inside the context of the task, used for debugging
+		// get a way to eval something inside the context of the task, used for debugging
+		function HGPeephole(){
 		  console.log(function(){return function(code){eval(code)}}());
 		}
 
-		function HGPeepHole(){ // alias
+		// alias for HGPeephole
+		function HGPeepHole(){
 		  HGPeephole();
 		}
 		
-		var HGFeedbackMap = {};
-		var HGFeedbackOnlyList = [];
+		var HGFeedbackMap = {}; // for optimal inputs
+		var HGFeedbackOnlyList = []; // for hidden elements, which to be shown as feedback
 		
+		// shows all feedback registered in the HGFeedbackMap or HGFeedbackOnlyList
 		function HGShowFeedback(){
 		  var inputs = document.querySelectorAll("[HGInput]") // get all inputs
 		  for (var InpNum = 0; InpNum < inputs.length; InpNum++){
@@ -463,7 +501,8 @@ function HGExecuteTask(taskCode){
 		HGLoaded = false; 
 		HGLoadHandler = function(){}; // may be replaced by user code to be called upon loading
 
-		function HGPrepLoad(){ // loads values after user code runs, calls load handler at end
+		// loads values after user code runs, calls load handler at end
+		function HGPrepLoad(){
 			if(!HGLoaded){
 				HGLoaded = true;
 				HGLoadAll();
@@ -480,13 +519,15 @@ function HGExecuteTask(taskCode){
 			}
 		}
 
-		function HGRegisterLoadingHandler(handler){ // sets new load handler (see HGPrepLoad)
+		// sets new load handler (see HGPrepLoad)
+		function HGRegisterLoadingHandler(handler){
 			HGLoadHandler = handler;
 		}
 
 		var HGRandomSeed = 0;
 		var HGMetaData = {};
 
+		// some final preparations depending on the situation the task is being worked on in (answering, correcting etc.)
 		function HGPrep(){
 			HGRegisterEvaluator(function(){HGOutput('answer').HGSetter(HGOutput('raw').HGGetter());});
 			if(typeof(HGPrepPass) == "undefined"){HGPrepPass = 0;} //temporary solution for solving the second round of preparations when correcting}
@@ -507,7 +548,7 @@ function HGExecuteTask(taskCode){
 			}
 			HGPrepPass += 1;
 		}
-		if(HGInstance == 0){
+		if(HGInstance == 0){ // globalize some important functions, which are used by some elements outside of this scope (i.e. buttons etc.)
 		  HGGlobalize(HGToB64, "HGToB64");
 		  HGGlobalize(HGFromB64, "HGFromB64");
 		  HGGlobalize(HGSaveAndClick, "HGSaveAndClick");
