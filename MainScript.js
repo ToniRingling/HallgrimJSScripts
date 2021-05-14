@@ -507,7 +507,14 @@ function HGExecuteTask(taskCode){
 			}
 			HGPrepPass += 1;
 		}
-
+		if(HGInstance == 0){
+		  HGGlobalize(HGToB64, "HGToB64");
+		  HGGlobalize(HGFromB64, "HGFromB64");
+		  HGGlobalize(HGSaveAndClick, "HGSaveAndClick");
+		  HGGlobalize(HGElement, "HGElement");
+		  HGGlobalize(HGFinishAll, "HGFinishAll");
+		  HGGlobalize(HGTimeEnder,"HGTimeEnder");
+		}
 		HGPrep();
 		` + taskCode + `
 		HGPrepLoad();
