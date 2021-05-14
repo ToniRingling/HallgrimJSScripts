@@ -489,7 +489,7 @@ function HGExecuteTask(taskCode){
 		function HGShowFeedback(){
 		  var inputs = document.querySelectorAll("[HGInput]") // get all inputs
 		  for (var InpNum = 0; InpNum < inputs.length; InpNum++){
-			if((inputs[InpNum].getAttribute("HGNumber") == HGInstance) && (typeof HGFeedbackMap[inputs[InpNum].getAttribute("HGInput") + "num" + HGInstance]] != "undefined")){ // if feedback exists, set content to feedback
+			if((inputs[InpNum].getAttribute("HGNumber") == HGInstance) && (typeof HGFeedbackMap[inputs[InpNum].getAttribute("HGInput") + "num" + HGInstance] != "undefined")){ // if feedback exists, set content to feedback
 			  inputs[InpNum].HGSetter(HGFeedbackMap[inputs[InpNum].getAttribute("HGInput") + "num" + HGInstance]);
 			}
 		  }
