@@ -339,16 +339,18 @@ function HGExecuteTask(taskCode){
 		// to be put on a replacement button for an old navigation button, saves and evaluates answers before clicking old button
 		async function HGSaveAndClick(toClick){
 		  try{
+		    var oldErrorMessageNumber = HGErrorMessages.length;
 		    HGFinishAll();
+		    if(HGErrorMessages.length != oldErrorMessageNumber){ // There was some error in finishing which was caught and added to the error messages however.
+		      throw(-1);
+		    }
 		  }
 		  catch(e){
-		    if(confirm("Bei der Bewertung ist ein Skriptfehler aufgetreten! Bitte melden Sie dies den für die Aufgaben zuständigen Personen. Ihre Antwort konnte nicht korrekt abgegeben werden. Trotzdem fortfahren?")){
-		      HGRealButtons[toClick].click(); // We don't really have a way to handle the case where this fails too...
-		    }
-		    else{
+		    if(!confirm("Bei der Bewertung ist ein Skriptfehler aufgetreten! Bitte melden Sie dies den für die Aufgaben zuständigen Personen. Ihre Antwort konnte nicht korrekt abgegeben werden. Trotzdem fortfahren?")){
 		      return;
 		    }
 		  }
+		  HGRealButtons[toClick].click(); // We can't really fix the case where this fails.
 		}
 
 		if(typeof HGNavButtonsReplaced == 'undefined'){
